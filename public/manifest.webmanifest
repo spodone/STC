@@ -1,0 +1,11 @@
+{
+  "name": "Smash the Cyclist",
+  "short_name": "Smash Cyclist",
+  "description": "Dodge bananas, pigeons, and protesters in this chaotic endless cycling runner.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1320",
+  "theme_color": "#1a1f2e",
+  "icons": []
+}
