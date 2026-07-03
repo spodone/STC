@@ -9,6 +9,14 @@ export interface SkinDefinition extends CosmeticItem {
   helmetColor: number;
   pattern: JerseyPattern;
   patternColor: number;
+  /** Path (under public/) to a real illustrated sprite for this skin. When
+   * present, PreloadScene loads it and TextureFactory skips the procedural
+   * version — same graceful-upgrade pattern as the environment backgrounds. */
+  artPath?: string;
+  /** Fraction down the source image where the wheel/ground contact sits —
+   * varies per art source, so it's measured per-skin rather than assumed.
+   * Defaults to 0.95 (matches the procedural sprites) when omitted. */
+  spriteOriginY?: number;
 }
 
 /** Texture key for a given skin id — TextureFactory generates one per entry. */
@@ -27,6 +35,8 @@ export const SKINS: readonly SkinDefinition[] = [
     helmetColor: 0x232323,
     pattern: "solid",
     patternColor: 0x000000,
+    artPath: "art/cyclist/yellow.png",
+    spriteOriginY: 0.884,
   },
   {
     id: "polka-dot",

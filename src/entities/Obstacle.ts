@@ -1,16 +1,24 @@
 import Phaser from "phaser";
-import { LANE_WIDTH, LANE_X, PLAYER_Y } from "../config/GameConfig";
+import { HORIZON_Y, LANE_COUNT, PLAYER_Y, ROAD_X, laneWidthAtY } from "../config/GameConfig";
 import { BASE_HIT_WINDOW_PX, PROTESTER_MESSAGES } from "../config/obstacles";
-import { clamp, depthProgress, depthScale, lerp, pickRandom, randomRange } from "../utils/mathUtils";
+import { approachSpeedMultiplier, clamp, depthProgress, depthScale, lerp, pickRandom, randomRange } from "../utils/mathUtils";
 import type { LaneIndex, ObstacleDefinition } from "../types/index";
 
-export const OBSTACLE_SPAWN_Y = -120;
+export const OBSTACLE_SPAWN_Y = HORIZON_Y;
 export const OBSTACLE_RECYCLE_MARGIN = 160;
+
+const CENTER_OFFSET = (LANE_COUNT - 1) / 2;
+const laneUnit = (lane: LaneIndex): number => lane - CENTER_OFFSET;
 
 /**
  * One reusable entity for every obstacle kind. Behaviour is driven entirely
  * by `definition.motion`, so the pool never needs kind-specific subclasses —
  * new obstacle kinds are just a new ObstacleDefinition entry.
+ *
+ * Position is tracked as `xUnit` — an offset in lane-widths from the road's
+ * center, independent of depth — and converted to a pixel x every frame via
+ * laneWidthAtY(y). That's what makes the sideways motion (crossing, swerving,
+ * swooping in) converge correctly toward the horizon's vanishing point.
  */
 export class Obstacle extends Phaser.GameObjects.Container {
   private readonly shadow: Phaser.GameObjects.Image;
@@ -20,8 +28,9 @@ export class Obstacle extends Phaser.GameObjects.Container {
 
   private definition!: ObstacleDefinition;
   private age = 0;
-  private crossStartX = 0;
-  private crossEndX = 0;
+  private xUnit = 0;
+  private crossStartUnit = 0;
+  private crossEndUnit = 0;
   private crossDuration = 1;
   private laneSwerveTimer = 0;
   private laneSwerveTarget = 1 as LaneIndex;
@@ -54,25 +63,28 @@ export class Obstacle extends Phaser.GameObjects.Container {
 
     if (definition.motion === "crossing") {
       const leftToRight = Math.random() < 0.5;
-      const offRoadLeft = LANE_X[0] - LANE_WIDTH * 0.7;
-      const offRoadRight = LANE_X[2] + LANE_WIDTH * 0.7;
-      this.crossStartX = leftToRight ? offRoadLeft : offRoadRight;
-      this.crossEndX = leftToRight ? offRoadRight : offRoadLeft;
+      const offRoadLeft = laneUnit(0) - 0.7;
+      const offRoadRight = laneUnit(2) + 0.7;
+      this.crossStartUnit = leftToRight ? offRoadLeft : offRoadRight;
+      this.crossEndUnit = leftToRight ? offRoadRight : offRoadLeft;
       this.crossDuration = travelTime * randomRange(0.7, 0.9);
-      this.x = this.crossStartX;
+      this.xUnit = this.crossStartUnit;
     } else if (definition.motion === "swooping") {
       const side = Math.random() < 0.5 ? -1 : 1;
-      this.crossStartX = LANE_X[lane] + side * LANE_WIDTH * 1.3;
-      this.crossEndX = LANE_X[lane];
+      const targetUnit = laneUnit(lane);
+      this.crossStartUnit = targetUnit + side * 1.3;
+      this.crossEndUnit = targetUnit;
       this.crossDuration = 0.4;
-      this.x = this.crossStartX;
+      this.xUnit = this.crossStartUnit;
     } else if (definition.motion === "inLane") {
-      this.x = LANE_X[lane];
+      this.xUnit = laneUnit(lane);
       this.laneSwerveTimer = randomRange(0.55, 0.85);
       this.laneSwerveTarget = lane;
     } else {
-      this.x = LANE_X[lane];
+      this.xUnit = laneUnit(lane);
     }
+
+    this.x = ROAD_X + this.xUnit * laneWidthAtY(this.y);
 
     if (definition.kind === "protester") {
       this.ensureSign();
@@ -107,23 +119,17 @@ export class Obstacle extends Phaser.GameObjects.Container {
     return this.definition.kind;
   }
 
-  getLane(): LaneIndex {
-    let closest: LaneIndex = 0;
-    let closestDist = Infinity;
-    for (let i = 0; i < LANE_X.length; i++) {
-      const d = Math.abs(this.x - LANE_X[i]);
-      if (d < closestDist) {
-        closestDist = d;
-        closest = i as LaneIndex;
-      }
-    }
-    return closest;
+  isJumpable(): boolean {
+    return this.definition.jumpable;
   }
 
-  /** True while the obstacle's x is roughly centered in a lane (not mid-crossing/off-road). */
+  getLane(): LaneIndex {
+    return clamp(Math.round(this.xUnit + CENTER_OFFSET), 0, LANE_COUNT - 1) as LaneIndex;
+  }
+
+  /** True while the obstacle is roughly centered in a lane (not mid-crossing/off-road). */
   isInLaneBounds(): boolean {
-    const nearestLaneX = LANE_X[this.getLane()];
-    return Math.abs(this.x - nearestLaneX) < LANE_WIDTH * 0.42;
+    return Math.abs(this.xUnit - laneUnit(this.getLane())) < 0.42;
   }
 
   getHitWindowPx(): number {
@@ -139,11 +145,13 @@ export class Obstacle extends Phaser.GameObjects.Container {
     this.age += deltaSeconds;
 
     const verticalMultiplier = this.definition.motion === "inLane" ? 1.08 : 1;
-    this.y += scrollSpeed * deltaSeconds * verticalMultiplier;
+    const priorProgress = depthProgress(this.y, OBSTACLE_SPAWN_Y, PLAYER_Y);
+    const approachMultiplier = approachSpeedMultiplier(priorProgress);
+    this.y += scrollSpeed * deltaSeconds * verticalMultiplier * approachMultiplier;
 
     if (this.definition.motion === "crossing") {
       const t = clamp(this.age / this.crossDuration, 0, 1);
-      this.x = lerp(this.crossStartX, this.crossEndX, t);
+      this.xUnit = lerp(this.crossStartUnit, this.crossEndUnit, t);
       if (this.definition.kind === "dog") {
         this.sprite.y = Math.sin(this.age * 16) * 3;
       } else {
@@ -152,7 +160,7 @@ export class Obstacle extends Phaser.GameObjects.Container {
     } else if (this.definition.motion === "swooping") {
       const t = clamp(this.age / this.crossDuration, 0, 1);
       const eased = 1 - Math.pow(1 - t, 3);
-      this.x = lerp(this.crossStartX, this.crossEndX, eased);
+      this.xUnit = lerp(this.crossStartUnit, this.crossEndUnit, eased);
       this.sprite.y = Math.sin(this.age * 14) * 4;
     } else if (this.definition.motion === "inLane") {
       this.laneSwerveTimer -= deltaSeconds;
@@ -162,12 +170,14 @@ export class Obstacle extends Phaser.GameObjects.Container {
         this.laneSwerveTarget = pickRandom(options);
         this.scene.tweens.add({
           targets: this,
-          x: LANE_X[this.laneSwerveTarget],
+          xUnit: laneUnit(this.laneSwerveTarget),
           duration: 320,
           ease: "Sine.easeInOut",
         });
       }
     }
+
+    this.x = ROAD_X + this.xUnit * laneWidthAtY(this.y);
 
     const progress = depthProgress(this.y, OBSTACLE_SPAWN_Y, PLAYER_Y);
     this.setScale(depthScale(progress));

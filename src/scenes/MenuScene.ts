@@ -3,6 +3,7 @@ import { DESIGN_HEIGHT, DESIGN_WIDTH, PALETTE, STORAGE_KEYS } from "../config/Ga
 import { CosmeticManager } from "../systems/CosmeticManager";
 import { audioManager } from "../systems/AudioManager";
 import { playerTextureKey } from "../config/cosmetics";
+import { fitPlayerSprite } from "../utils/spriteFit";
 import { storage } from "../utils/storage";
 
 export class MenuScene extends Phaser.Scene {
@@ -46,7 +47,8 @@ export class MenuScene extends Phaser.Scene {
 
     const cosmetics = new CosmeticManager();
     const skin = cosmetics.getEquipped();
-    const preview = this.add.image(cx, 660, playerTextureKey(skin.id)).setScale(1.6);
+    const preview = this.add.image(cx, 660, playerTextureKey(skin.id));
+    fitPlayerSprite(preview, skin, 304);
     this.tweens.add({
       targets: preview,
       y: 640,
@@ -92,6 +94,11 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private drawBackground(): void {
+    if (this.textures.exists("env-mountains")) {
+      this.add.image(DESIGN_WIDTH / 2, DESIGN_HEIGHT / 2, "env-mountains").setDisplaySize(DESIGN_WIDTH, DESIGN_HEIGHT);
+      return;
+    }
+
     const g = this.add.graphics();
     g.fillGradientStyle(PALETTE.skyTop, PALETTE.skyTop, PALETTE.skyBottom, PALETTE.skyBottom, 1);
     g.fillRect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);

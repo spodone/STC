@@ -25,6 +25,9 @@ export class TextureFactory {
     this.generateCoin();
     this.generateParticle();
     for (const skin of SKINS) {
+      // Real art (loaded in PreloadScene.preload) takes precedence — skip
+      // the procedural version so it isn't overwritten.
+      if (skin.artPath) continue;
       this.generatePlayer(playerTextureKey(skin.id), skin.jerseyColor, {
         frameColor: skin.frameColor,
         helmetColor: skin.helmetColor,
@@ -85,7 +88,47 @@ export class TextureFactory {
         this.g.fillRect(x - 4, y, 8, dash);
       }
     }
+
+    // roadside scenery — baked into the tile so the whole margin scrolls
+    // with the road, not just a static painting behind moving obstacles.
+    const leftCx = roadLeft / 2;
+    const rightCx = roadLeft + ROAD_WIDTH + roadLeft / 2;
+    this.drawTree(leftCx, 50);
+    this.drawRock(leftCx, 128);
+    this.drawCrowdCluster(leftCx, 196);
+    this.drawCrowdCluster(rightCx, 46);
+    this.drawTree(rightCx, 124);
+    this.drawRock(rightCx, 200);
+
     this.save("road-tile", w, h);
+  }
+
+  private drawTree(cx: number, cy: number): void {
+    this.g.fillStyle(0x5a3a22, 1);
+    this.g.fillRect(cx - 3, cy + 10, 6, 14);
+    this.g.fillStyle(PALETTE.grassShade, 1);
+    this.g.fillTriangle(cx - 18, cy + 14, cx + 18, cy + 14, cx, cy - 6);
+    this.g.fillTriangle(cx - 15, cy + 4, cx + 15, cy + 4, cx, cy - 16);
+    this.g.fillTriangle(cx - 12, cy - 6, cx + 12, cy - 6, cx, cy - 24);
+  }
+
+  private drawRock(cx: number, cy: number): void {
+    this.g.fillStyle(0x8b8d92, 1);
+    this.g.fillEllipse(cx, cy, 30, 18);
+    this.g.fillStyle(0x9fa1a6, 1);
+    this.g.fillEllipse(cx - 5, cy - 4, 14, 9);
+  }
+
+  private drawCrowdCluster(cx: number, cy: number): void {
+    const skinTones = [0xf2b98a, 0xc98a5c, 0x8a5a3a];
+    const shirtColors = [0xe94b4b, 0x3d8b52, 0xffd23f, 0x2f6fed];
+    for (let i = 0; i < 3; i++) {
+      const x = cx - 14 + i * 14;
+      this.g.fillStyle(shirtColors[i % shirtColors.length], 1);
+      this.g.fillRoundedRect(x - 6, cy, 12, 14, 4);
+      this.g.fillStyle(skinTones[i % skinTones.length], 1);
+      this.g.fillCircle(x, cy - 5, 6);
+    }
   }
 
   private generateCloud(): void {

@@ -1,7 +1,13 @@
 import Phaser from "phaser";
 import { LANE_CHANGE_MS, LANE_X, PLAYER_Y } from "../config/GameConfig";
+import { playerTextureKey } from "../config/cosmetics";
 import { clamp } from "../utils/mathUtils";
+import { fitPlayerSprite } from "../utils/spriteFit";
+import type { SkinDefinition } from "../config/cosmetics";
 import type { LaneIndex } from "../types/index";
+
+/** Display height the rider sprite is normalized to, regardless of source art resolution. */
+const SPRITE_TARGET_HEIGHT = 190;
 
 /** The rider. Only moves left/right between lanes — forward motion is simulated by the world scrolling under it. */
 export class Player extends Phaser.GameObjects.Container {
@@ -10,17 +16,20 @@ export class Player extends Phaser.GameObjects.Container {
   private readonly sprite: Phaser.GameObjects.Image;
   private bobTime = 0;
   private crashed = false;
+  private jumping = false;
 
-  constructor(scene: Phaser.Scene, textureKey: string) {
+  constructor(scene: Phaser.Scene, skin: SkinDefinition) {
     super(scene, LANE_X[1], PLAYER_Y);
     this.shadow = scene.add.image(0, 8, "shadow-md").setAlpha(0.85);
-    this.sprite = scene.add.image(0, 0, textureKey).setOrigin(0.5, 0.95);
+    this.sprite = scene.add.image(0, 0, playerTextureKey(skin.id));
+    fitPlayerSprite(this.sprite, skin, SPRITE_TARGET_HEIGHT);
     this.add([this.shadow, this.sprite]);
     scene.add.existing(this);
   }
 
-  setSkin(textureKey: string): void {
-    this.sprite.setTexture(textureKey);
+  setSkin(skin: SkinDefinition): void {
+    this.sprite.setTexture(playerTextureKey(skin.id));
+    fitPlayerSprite(this.sprite, skin, SPRITE_TARGET_HEIGHT);
   }
 
   getLane(): LaneIndex {
@@ -31,11 +40,17 @@ export class Player extends Phaser.GameObjects.Container {
     return this.crashed;
   }
 
+  isJumping(): boolean {
+    return this.jumping;
+  }
+
   reset(): void {
     this.scene.tweens.killTweensOf(this);
     this.scene.tweens.killTweensOf(this.sprite);
+    this.scene.tweens.killTweensOf(this.shadow);
     this.lane = 1;
     this.crashed = false;
+    this.jumping = false;
     this.x = LANE_X[1];
     this.y = PLAYER_Y;
     this.angle = 0;
@@ -43,7 +58,43 @@ export class Player extends Phaser.GameObjects.Container {
     this.setAlpha(1);
     this.sprite.setTint(0xffffff);
     this.sprite.y = 0;
+    this.shadow.setScale(1);
+    this.shadow.setAlpha(0.85);
     this.bobTime = 0;
+  }
+
+  jump(): void {
+    if (this.crashed || this.jumping) return;
+    this.jumping = true;
+
+    this.scene.tweens.add({
+      targets: this.shadow,
+      scale: 0.55,
+      alpha: 0.35,
+      duration: 180,
+      yoyo: true,
+      ease: "Sine.easeInOut",
+    });
+
+    this.scene.tweens.add({
+      targets: this.sprite,
+      y: -70,
+      duration: 180,
+      hold: 40,
+      yoyo: true,
+      ease: "Quad.easeOut",
+      onComplete: () => {
+        this.jumping = false;
+        this.scene.tweens.add({
+          targets: this,
+          scaleY: 0.88,
+          scaleX: 1.06,
+          duration: 90,
+          yoyo: true,
+          ease: "Quad.easeOut",
+        });
+      },
+    });
   }
 
   changeLane(direction: -1 | 1): void {
@@ -71,7 +122,9 @@ export class Player extends Phaser.GameObjects.Container {
   update(deltaSeconds: number): void {
     if (this.crashed) return;
     this.bobTime += deltaSeconds;
-    this.sprite.y = Math.sin(this.bobTime * 9) * 3;
+    if (!this.jumping) {
+      this.sprite.y = Math.sin(this.bobTime * 9) * 3;
+    }
   }
 
   playCrash(onComplete: () => void): void {

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { Coin } from "../entities/Coin";
-import { LANE_X, PLAYER_Y } from "../config/GameConfig";
+import { PLAYER_Y } from "../config/GameConfig";
 import { ObjectPool } from "../utils/ObjectPool";
 import { randomInt, randomRange } from "../utils/mathUtils";
 import type { LaneIndex } from "../types/index";
@@ -66,8 +66,7 @@ export class CoinSpawner extends Phaser.Events.EventEmitter {
     const count = randomInt(3, 5);
     for (let i = 0; i < count; i++) {
       const coin = this.pool.acquire();
-      coin.spawn(lane, LANE_X[lane]);
-      coin.y -= i * TRAIL_SPACING_PX;
+      coin.spawn(lane, i * TRAIL_SPACING_PX);
       this.active.push(coin);
     }
   }

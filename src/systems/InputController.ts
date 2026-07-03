@@ -1,10 +1,11 @@
 import Phaser from "phaser";
 import { SWIPE_MIN_DISTANCE_PX } from "../config/GameConfig";
 
-/** Unifies swipe (touch/mouse drag) and keyboard into two simple lane-change signals. */
+/** Unifies swipe (touch/mouse drag) and keyboard into simple lane-change/jump signals. */
 export class InputController extends Phaser.Events.EventEmitter {
   static readonly LANE_LEFT = "lane-left";
   static readonly LANE_RIGHT = "lane-right";
+  static readonly JUMP = "jump";
   static readonly PAUSE_PRESSED = "pause-pressed";
 
   private readonly scene: Phaser.Scene;
@@ -38,9 +39,14 @@ export class InputController extends Phaser.Events.EventEmitter {
 
       const dx = p.x - this.pointerStartX;
       const dy = p.y - this.pointerStartY;
-      if (Math.abs(dx) < SWIPE_MIN_DISTANCE_PX || Math.abs(dx) <= Math.abs(dy)) return;
 
-      this.emit(dx > 0 ? InputController.LANE_RIGHT : InputController.LANE_LEFT);
+      if (Math.abs(dx) > Math.abs(dy)) {
+        if (Math.abs(dx) < SWIPE_MIN_DISTANCE_PX) return;
+        this.emit(dx > 0 ? InputController.LANE_RIGHT : InputController.LANE_LEFT);
+      } else {
+        if (Math.abs(dy) < SWIPE_MIN_DISTANCE_PX) return;
+        this.emit(InputController.JUMP);
+      }
     });
   }
 
@@ -52,6 +58,10 @@ export class InputController extends Phaser.Events.EventEmitter {
     keyboard.on("keydown-A", () => this.enabled && this.emit(InputController.LANE_LEFT));
     keyboard.on("keydown-RIGHT", () => this.enabled && this.emit(InputController.LANE_RIGHT));
     keyboard.on("keydown-D", () => this.enabled && this.emit(InputController.LANE_RIGHT));
+    keyboard.on("keydown-DOWN", () => this.enabled && this.emit(InputController.JUMP));
+    keyboard.on("keydown-S", () => this.enabled && this.emit(InputController.JUMP));
+    keyboard.on("keydown-UP", () => this.enabled && this.emit(InputController.JUMP));
+    keyboard.on("keydown-W", () => this.enabled && this.emit(InputController.JUMP));
     keyboard.on("keydown-ESC", () => this.emit(InputController.PAUSE_PRESSED));
     keyboard.on("keydown-P", () => this.emit(InputController.PAUSE_PRESSED));
   }

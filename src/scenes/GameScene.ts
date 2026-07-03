@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import { DESIGN_HEIGHT, DESIGN_WIDTH, PALETTE } from "../config/GameConfig";
-import { playerTextureKey } from "../config/cosmetics";
 import { Player } from "../entities/Player";
 import { InputController } from "../systems/InputController";
 import { DifficultyManager } from "../systems/DifficultyManager";
@@ -9,6 +8,7 @@ import { CoinManager } from "../systems/CoinManager";
 import { CosmeticManager } from "../systems/CosmeticManager";
 import { ObstacleSpawner } from "../systems/ObstacleSpawner";
 import { CoinSpawner } from "../systems/CoinSpawner";
+import { EnvironmentManager } from "../systems/EnvironmentManager";
 import { audioManager } from "../systems/AudioManager";
 import { HUD } from "../ui/HUD";
 import { GameOverPanel } from "../ui/GameOverPanel";
@@ -30,7 +30,7 @@ export class GameScene extends Phaser.Scene {
   private gameOverPanel!: GameOverPanel;
   private pauseOverlay!: Phaser.GameObjects.Container;
   private pauseButtons: Phaser.GameObjects.Container[] = [];
-  private road!: Phaser.GameObjects.TileSprite;
+  private environment!: EnvironmentManager;
   private state: GameState = "countdown";
   private lastResult: RunResult | null = null;
 
@@ -42,7 +42,7 @@ export class GameScene extends Phaser.Scene {
     this.state = "countdown";
     this.lastResult = null;
 
-    this.buildBackground();
+    this.environment = new EnvironmentManager(this);
 
     this.difficulty = new DifficultyManager();
     this.score = new ScoreManager();
@@ -50,7 +50,7 @@ export class GameScene extends Phaser.Scene {
     this.cosmetics = new CosmeticManager();
 
     const skin = this.cosmetics.getEquipped();
-    this.player = new Player(this, playerTextureKey(skin.id));
+    this.player = new Player(this, skin);
     this.player.setDepth(500);
 
     this.obstacles = new ObstacleSpawner(this, this.difficulty);
@@ -72,6 +72,7 @@ export class GameScene extends Phaser.Scene {
     this.inputController = new InputController(this);
     this.inputController.on(InputController.LANE_LEFT, () => this.player.changeLane(-1));
     this.inputController.on(InputController.LANE_RIGHT, () => this.player.changeLane(1));
+    this.inputController.on(InputController.JUMP, () => this.onJumpPressed());
     this.inputController.on(InputController.PAUSE_PRESSED, () => this.togglePause());
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.inputController.destroy());
@@ -87,22 +88,12 @@ export class GameScene extends Phaser.Scene {
 
     this.difficulty.update(dt);
     const scrollSpeed = this.difficulty.getScrollSpeed();
-    this.road.tilePositionY -= scrollSpeed * dt;
+    this.environment.scrollFallback(scrollSpeed, dt);
+    this.environment.update(this.score.getMeters());
 
-    this.obstacles.update(dt, scrollSpeed, this.player.getLane(), this.player.isCrashed());
+    this.obstacles.update(dt, scrollSpeed, this.player.getLane(), this.player.isCrashed(), this.player.isJumping());
     this.coinSpawner.update(dt, scrollSpeed, this.player.getLane(), this.player.isCrashed());
     this.score.addDistance(scrollSpeed * dt);
-  }
-
-  private buildBackground(): void {
-    const g = this.add.graphics();
-    g.fillGradientStyle(PALETTE.skyTop, PALETTE.skyTop, PALETTE.skyBottom, PALETTE.skyBottom, 1);
-    g.fillRect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
-    g.setDepth(-100);
-
-    this.road = this.add
-      .tileSprite(DESIGN_WIDTH / 2, DESIGN_HEIGHT / 2, DESIGN_WIDTH, DESIGN_HEIGHT, "road-tile")
-      .setDepth(-50);
   }
 
   private startCountdown(): void {
@@ -114,7 +105,7 @@ export class GameScene extends Phaser.Scene {
     this.coinManager.reset();
     this.obstacles.reset();
     this.coinSpawner.reset();
-    this.road.tilePositionY = 0;
+    this.environment.reset();
 
     const cx = DESIGN_WIDTH / 2;
     const cy = DESIGN_HEIGHT / 2;
@@ -220,6 +211,12 @@ export class GameScene extends Phaser.Scene {
   private restart(): void {
     this.gameOverPanel.hide();
     this.startCountdown();
+  }
+
+  private onJumpPressed(): void {
+    if (this.state !== "playing" || this.player.isJumping()) return;
+    this.player.jump();
+    audioManager.playWhoosh();
   }
 
   private togglePause(): void {

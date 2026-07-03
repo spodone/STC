@@ -1,16 +1,19 @@
 import Phaser from "phaser";
-import { PLAYER_Y } from "../config/GameConfig";
-import { depthProgress, depthScale } from "../utils/mathUtils";
+import { HORIZON_Y, LANE_COUNT, PLAYER_Y, ROAD_X, laneWidthAtY } from "../config/GameConfig";
+import { approachSpeedMultiplier, depthProgress, depthScale } from "../utils/mathUtils";
 import type { LaneIndex } from "../types/index";
 
-export const COIN_SPAWN_Y = -100;
+export const COIN_SPAWN_Y = HORIZON_Y;
 export const COIN_RECYCLE_MARGIN = 160;
 export const COIN_HIT_WINDOW_PX = 70;
+
+const CENTER_OFFSET = (LANE_COUNT - 1) / 2;
 
 export class Coin extends Phaser.GameObjects.Container {
   private readonly shadow: Phaser.GameObjects.Image;
   private readonly sprite: Phaser.GameObjects.Image;
   private lane: LaneIndex = 1;
+  private xUnit = 0;
   private age = 0;
   active = false;
   collected = false;
@@ -24,10 +27,11 @@ export class Coin extends Phaser.GameObjects.Container {
     this.setVisible(false);
   }
 
-  spawn(lane: LaneIndex, laneX: number): void {
+  spawn(lane: LaneIndex, yOffset = 0): void {
     this.lane = lane;
-    this.x = laneX;
-    this.y = COIN_SPAWN_Y;
+    this.xUnit = lane - CENTER_OFFSET;
+    this.y = COIN_SPAWN_Y - yOffset;
+    this.x = ROAD_X + this.xUnit * laneWidthAtY(this.y);
     this.age = 0;
     this.active = true;
     this.collected = false;
@@ -47,7 +51,9 @@ export class Coin extends Phaser.GameObjects.Container {
   update(deltaSeconds: number, scrollSpeed: number): void {
     if (!this.active || this.collected) return;
     this.age += deltaSeconds;
-    this.y += scrollSpeed * deltaSeconds;
+    const priorProgress = depthProgress(this.y, COIN_SPAWN_Y, PLAYER_Y);
+    this.y += scrollSpeed * deltaSeconds * approachSpeedMultiplier(priorProgress);
+    this.x = ROAD_X + this.xUnit * laneWidthAtY(this.y);
     this.sprite.scaleX = Math.cos(this.age * 8);
     const progress = depthProgress(this.y, COIN_SPAWN_Y, PLAYER_Y);
     this.setScale(depthScale(progress));

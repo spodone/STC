@@ -12,8 +12,19 @@ export function depthProgress(y: number, spawnY: number, playerY: number): numbe
 }
 
 /** Cheap pseudo-3D: objects scale up as they approach the player line. */
-export function depthScale(progress: number, minScale = 0.55, maxScale = 1.15): number {
+export function depthScale(progress: number, minScale = 0.4, maxScale = 1.15): number {
   return lerp(minScale, maxScale, progress);
+}
+
+/**
+ * How fast an approaching object should currently be covering ground, as a
+ * multiplier on the base scroll speed. Real perspective motion isn't
+ * constant-speed — a distant object crawls, a close one rushes past. Constant
+ * speed reads as "falling/scrolling"; this easing is what reads as "I'm
+ * riding toward it". Quadratic ease-in keeps the crawl noticeable far away.
+ */
+export function approachSpeedMultiplier(progress: number, minMult = 0.35, maxMult = 1.6): number {
+  return lerp(minMult, maxMult, progress * progress);
 }
 
 export function randomRange(min: number, max: number): number {

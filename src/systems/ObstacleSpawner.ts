@@ -33,7 +33,13 @@ export class ObstacleSpawner extends Phaser.Events.EventEmitter {
     this.spawnTimer = randomInt(1, 2);
   }
 
-  update(deltaSeconds: number, scrollSpeed: number, playerLane: LaneIndex, playerCrashed: boolean): void {
+  update(
+    deltaSeconds: number,
+    scrollSpeed: number,
+    playerLane: LaneIndex,
+    playerCrashed: boolean,
+    playerJumping: boolean,
+  ): void {
     if (!playerCrashed) {
       this.spawnTimer -= deltaSeconds;
       if (this.spawnTimer <= 0) {
@@ -50,7 +56,9 @@ export class ObstacleSpawner extends Phaser.Events.EventEmitter {
         const withinBand = Math.abs(obstacle.y - PLAYER_Y) <= obstacle.getHitWindowPx();
         if (withinBand && obstacle.isInLaneBounds() && obstacle.getLane() === playerLane) {
           obstacle.resolved = true;
-          this.emit(ObstacleSpawner.PLAYER_HIT, obstacle.getKind());
+          if (!(playerJumping && obstacle.isJumpable())) {
+            this.emit(ObstacleSpawner.PLAYER_HIT, obstacle.getKind());
+          }
         }
       }
 

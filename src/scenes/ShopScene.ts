@@ -4,6 +4,7 @@ import { playerTextureKey } from "../config/cosmetics";
 import { CosmeticManager } from "../systems/CosmeticManager";
 import { CoinManager } from "../systems/CoinManager";
 import { audioManager } from "../systems/AudioManager";
+import { fitPlayerSprite } from "../utils/spriteFit";
 import type { SkinDefinition } from "../config/cosmetics";
 
 const COLUMNS = 3;
@@ -99,7 +100,8 @@ export class ShopScene extends Phaser.Scene {
       bg.strokeRoundedRect(-CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H, 20);
     }
 
-    const preview = this.add.image(0, -50, playerTextureKey(skin.id)).setScale(0.75);
+    const preview = this.add.image(0, -50, playerTextureKey(skin.id));
+    fitPlayerSprite(preview, skin, 143);
     if (!unlocked) preview.setTint(0x555555);
 
     const name = this.add

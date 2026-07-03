@@ -29,6 +29,8 @@ export interface ObstacleDefinition {
   weight: number;
   /** Seconds into a run before this obstacle can appear at all. */
   unlockAtSeconds: number;
+  /** Ground-level clutter the player can clear with a jump; tall/wide obstacles can't be jumped. */
+  jumpable: boolean;
 }
 
 export type CosmeticCategory = "bike" | "helmet" | "jersey" | "skin";
