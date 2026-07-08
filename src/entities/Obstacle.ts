@@ -62,6 +62,7 @@ export class Obstacle extends Phaser.GameObjects.Container {
     // footprint; procedural textures render at native size (scale 1).
     this.sprite.setScale(definition.displayWidth ? definition.displayWidth / this.sprite.frame.width : 1);
     this.sprite.y = 0;
+    this.sprite.angle = 0;
 
     const travelTime = Math.max((PLAYER_Y - OBSTACLE_SPAWN_Y) / scrollSpeed, 0.4);
 
@@ -164,7 +165,14 @@ export class Obstacle extends Phaser.GameObjects.Container {
     } else if (this.definition.motion === "swooping") {
       const t = clamp(this.age / this.crossDuration, 0, 1);
       const eased = 1 - Math.pow(1 - t, 3);
-      this.xUnit = lerp(this.crossStartUnit, this.crossEndUnit, eased);
+      let base = lerp(this.crossStartUnit, this.crossEndUnit, eased);
+      if (this.definition.kind === "pigeon") {
+        // once it has swooped in, keep drifting side to side so it reads as
+        // flying (and forces the player to track it), with a matching wing bank
+        base += Math.sin(this.age * 3.0) * 0.85 * t;
+        this.sprite.angle = Math.cos(this.age * 3.0) * 12 * t;
+      }
+      this.xUnit = base;
       this.sprite.y = Math.sin(this.age * 14) * 4;
     } else if (this.definition.motion === "inLane") {
       this.laneSwerveTimer -= deltaSeconds;
