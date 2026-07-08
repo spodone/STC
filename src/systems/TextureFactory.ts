@@ -1,6 +1,12 @@
 import Phaser from "phaser";
 import { DESIGN_WIDTH, LANE_WIDTH, PALETTE, ROAD_WIDTH } from "../config/GameConfig";
 import { playerTextureKey, SKINS } from "../config/cosmetics";
+import { OBSTACLE_DEFINITIONS } from "../config/obstacles";
+
+/** Texture keys backed by real art loaded in PreloadScene — skip procedural gen for these. */
+const ART_BACKED_KEYS = new Set(
+  OBSTACLE_DEFINITIONS.filter((o) => o.artPath).map((o) => o.textureKey),
+);
 
 /**
  * Generates every game texture at runtime with Phaser.Graphics.
@@ -35,16 +41,16 @@ export class TextureFactory {
         patternColor: skin.patternColor,
       });
     }
-    this.generateBanana();
-    this.generatePigeon();
-    this.generateSelfieGuy();
-    this.generateDog();
-    this.generateCar();
-    this.generateBottle();
-    this.generateBarrier();
+    if (!ART_BACKED_KEYS.has("banana")) this.generateBanana();
+    if (!ART_BACKED_KEYS.has("pigeon")) this.generatePigeon();
+    if (!ART_BACKED_KEYS.has("selfieGuy")) this.generateSelfieGuy();
+    if (!ART_BACKED_KEYS.has("dog")) this.generateDog();
+    if (!ART_BACKED_KEYS.has("car")) this.generateCar();
+    if (!ART_BACKED_KEYS.has("bottle")) this.generateBottle();
+    if (!ART_BACKED_KEYS.has("barrier")) this.generateBarrier();
     this.generateProtester();
     this.generateFlag();
-    this.generateBackpack();
+    if (!ART_BACKED_KEYS.has("backpack")) this.generateBackpack();
     this.generateCloud();
     this.g.destroy();
   }

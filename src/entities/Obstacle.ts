@@ -57,6 +57,10 @@ export class Obstacle extends Phaser.GameObjects.Container {
     this.setAlpha(1);
     this.setVisible(true);
     this.sprite.setTexture(definition.textureKey);
+    this.sprite.setOrigin(0.5, definition.spriteOriginY ?? 0.85);
+    // Normalize real art (various source resolutions) to a consistent on-road
+    // footprint; procedural textures render at native size (scale 1).
+    this.sprite.setScale(definition.displayWidth ? definition.displayWidth / this.sprite.frame.width : 1);
     this.sprite.y = 0;
 
     const travelTime = Math.max((PLAYER_Y - OBSTACLE_SPAWN_Y) / scrollSpeed, 0.4);

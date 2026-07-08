@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { TextureFactory } from "../systems/TextureFactory";
 import { ENVIRONMENTS } from "../config/environments";
 import { SKINS, playerTextureKey } from "../config/cosmetics";
+import { OBSTACLE_DEFINITIONS } from "../config/obstacles";
 
 /**
  * Most art is generated procedurally (no shipped assets yet for most of the
@@ -20,6 +21,9 @@ export class PreloadScene extends Phaser.Scene {
     }
     for (const skin of SKINS) {
       if (skin.artPath) this.load.image(playerTextureKey(skin.id), skin.artPath);
+    }
+    for (const obstacle of OBSTACLE_DEFINITIONS) {
+      if (obstacle.artPath) this.load.image(obstacle.textureKey, obstacle.artPath);
     }
   }
 

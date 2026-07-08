@@ -36,7 +36,7 @@ export const SKINS: readonly SkinDefinition[] = [
     pattern: "solid",
     patternColor: 0x000000,
     artPath: "art/cyclist/yellow.png",
-    spriteOriginY: 0.884,
+    spriteOriginY: 0.998,
   },
   {
     id: "polka-dot",
@@ -49,6 +49,8 @@ export const SKINS: readonly SkinDefinition[] = [
     helmetColor: 0xe94b4b,
     pattern: "dots",
     patternColor: 0xe94b4b,
+    artPath: "art/cyclist/Polka.png",
+    spriteOriginY: 0.998,
   },
   {
     id: "green-sprinter",
@@ -61,6 +63,8 @@ export const SKINS: readonly SkinDefinition[] = [
     helmetColor: 0x232323,
     pattern: "solid",
     patternColor: 0x000000,
+    artPath: "art/cyclist/Green.png",
+    spriteOriginY: 0.998,
   },
   {
     id: "retro-rider",
@@ -73,6 +77,8 @@ export const SKINS: readonly SkinDefinition[] = [
     helmetColor: 0x8a5a2b,
     pattern: "stripe",
     patternColor: 0xb04242,
+    artPath: "art/cyclist/UCI.png",
+    spriteOriginY: 0.998,
   },
   {
     id: "coffee-rider",
@@ -121,6 +127,8 @@ export const SKINS: readonly SkinDefinition[] = [
     helmetColor: 0xffffff,
     pattern: "stripe",
     patternColor: 0xffffff,
+    artPath: "art/cyclist/Pizza.png",
+    spriteOriginY: 0.986,
   },
   {
     id: "business-cyclist",

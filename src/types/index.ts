@@ -31,6 +31,14 @@ export interface ObstacleDefinition {
   unlockAtSeconds: number;
   /** Ground-level clutter the player can clear with a jump; tall/wide obstacles can't be jumped. */
   jumpable: boolean;
+  /** Path (under public/) to a real illustrated sprite. When present, PreloadScene
+   * loads it under `textureKey` and TextureFactory skips the procedural version. */
+  artPath?: string;
+  /** Target on-road display width (design px) the art is normalized to, so any
+   * source resolution renders at the same footprint. Defaults to native size. */
+  displayWidth?: number;
+  /** Vertical origin (0=top,1=bottom) for ground contact; defaults to 0.85. */
+  spriteOriginY?: number;
 }
 
 export type CosmeticCategory = "bike" | "helmet" | "jersey" | "skin";
