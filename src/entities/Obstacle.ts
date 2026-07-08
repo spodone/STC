@@ -10,6 +10,9 @@ export const OBSTACLE_RECYCLE_MARGIN = 160;
 const CENTER_OFFSET = (LANE_COUNT - 1) / 2;
 const laneUnit = (lane: LaneIndex): number => lane - CENTER_OFFSET;
 
+/** Vertical center of the blank cardboard sign in the protester art (fraction from top). */
+const PROTESTER_SIGN_Y_FRAC = 0.284;
+
 /**
  * One reusable entity for every obstacle kind. Behaviour is driven entirely
  * by `definition.motion`, so the pool never needs kind-specific subclasses —
@@ -23,7 +26,6 @@ const laneUnit = (lane: LaneIndex): number => lane - CENTER_OFFSET;
 export class Obstacle extends Phaser.GameObjects.Container {
   private readonly shadow: Phaser.GameObjects.Image;
   private readonly sprite: Phaser.GameObjects.Image;
-  private signBg?: Phaser.GameObjects.Rectangle;
   private signText?: Phaser.GameObjects.Text;
 
   private definition!: ObstacleDefinition;
@@ -93,31 +95,33 @@ export class Obstacle extends Phaser.GameObjects.Container {
 
     if (definition.kind === "protester") {
       this.ensureSign();
-      if (this.signBg && this.signText) {
+      if (this.signText) {
         this.signText.setText(pickRandom(PROTESTER_MESSAGES));
-        this.signBg.setVisible(true);
+        // Overlay the message onto the blank cardboard drawn in the art.
+        const spriteScale = this.sprite.scaleX;
+        const fh = this.sprite.frame.height;
+        const originY = definition.spriteOriginY ?? 0.85;
+        this.signText.y = spriteScale * (PROTESTER_SIGN_Y_FRAC - originY) * fh;
         this.signText.setVisible(true);
       }
-    } else if (this.signBg && this.signText) {
-      this.signBg.setVisible(false);
+    } else if (this.signText) {
       this.signText.setVisible(false);
     }
   }
 
   private ensureSign(): void {
-    if (this.signBg && this.signText) return;
-    this.signBg = this.scene.add.rectangle(0, -150, 118, 46, 0xffffff, 0.95).setStrokeStyle(3, 0x1a1f2e);
+    if (this.signText) return;
     this.signText = this.scene.add
-      .text(0, -150, "", {
+      .text(0, 0, "", {
         fontFamily: "Arial, sans-serif",
-        fontSize: "13px",
+        fontSize: "12px",
         fontStyle: "bold",
-        color: "#1a1f2e",
+        color: "#2a2118",
         align: "center",
-        wordWrap: { width: 104 },
+        wordWrap: { width: 78 },
       })
       .setOrigin(0.5);
-    this.add([this.signBg, this.signText]);
+    this.add(this.signText);
   }
 
   getKind(): string {

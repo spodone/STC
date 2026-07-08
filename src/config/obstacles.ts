@@ -13,7 +13,7 @@ export const OBSTACLE_DEFINITIONS: readonly ObstacleDefinition[] = [
   { kind: "selfieGuy", motion: "static", textureKey: "selfieGuy", hitboxScale: 0.85, weight: 8, unlockAtSeconds: 6, jumpable: false, artPath: "art/obstacles/selfie.png", displayWidth: 120, spriteOriginY: 0.95 },
   { kind: "pigeon", motion: "swooping", textureKey: "pigeon", hitboxScale: 0.75, weight: 8, unlockAtSeconds: 10, jumpable: false, artPath: "art/obstacles/pigeon.png", displayWidth: 120, spriteOriginY: 0.6 },
   { kind: "dog", motion: "crossing", textureKey: "dog", hitboxScale: 0.85, weight: 7, unlockAtSeconds: 15, jumpable: true, artPath: "art/obstacles/dog.png", displayWidth: 150, spriteOriginY: 0.9 },
-  { kind: "protester", motion: "crossing", textureKey: "protester", hitboxScale: 0.9, weight: 5, unlockAtSeconds: 20, jumpable: false },
+  { kind: "protester", motion: "crossing", textureKey: "protester", hitboxScale: 0.9, weight: 5, unlockAtSeconds: 20, jumpable: false, artPath: "art/obstacles/protester.png", displayWidth: 128, spriteOriginY: 0.951 },
   { kind: "car", motion: "inLane", textureKey: "car", hitboxScale: 1.05, weight: 6, unlockAtSeconds: 25, jumpable: false, artPath: "art/obstacles/car.png", displayWidth: 175, spriteOriginY: 0.9 },
 ];
 

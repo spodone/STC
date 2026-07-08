@@ -48,7 +48,7 @@ export class TextureFactory {
     if (!ART_BACKED_KEYS.has("car")) this.generateCar();
     if (!ART_BACKED_KEYS.has("bottle")) this.generateBottle();
     if (!ART_BACKED_KEYS.has("barrier")) this.generateBarrier();
-    this.generateProtester();
+    if (!ART_BACKED_KEYS.has("protester")) this.generateProtester();
     if (!ART_BACKED_KEYS.has("backpack")) this.generateBackpack();
     this.generateCloud();
     this.g.destroy();
