@@ -9,14 +9,13 @@ export type ObstacleKind =
   | "bottle"
   | "barrier"
   | "protester"
-  | "flag"
   | "backpack";
 
 /** How an obstacle behaves once spawned. */
 export type ObstacleMotion =
   | "static" // sits in a lane, road scrolls past it
   | "crossing" // walks/runs across lanes (dog, protester)
-  | "swooping" // drops into a lane from off-screen (pigeon, flag)
+  | "swooping" // drops into a lane from off-screen (pigeon)
   | "inLane"; // moves within the lane grid, can change lanes (car)
 
 export interface ObstacleDefinition {

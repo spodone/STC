@@ -49,7 +49,6 @@ export class TextureFactory {
     if (!ART_BACKED_KEYS.has("bottle")) this.generateBottle();
     if (!ART_BACKED_KEYS.has("barrier")) this.generateBarrier();
     this.generateProtester();
-    this.generateFlag();
     if (!ART_BACKED_KEYS.has("backpack")) this.generateBackpack();
     this.generateCloud();
     this.g.destroy();
@@ -421,16 +420,6 @@ export class TextureFactory {
     this.save("protester", w, h);
   }
 
-  private generateFlag(): void {
-    this.clear();
-    const w = 90;
-    const h = 70;
-    this.g.fillStyle(0x8a5a2b, 1);
-    this.g.fillRect(6, 0, 6, h);
-    this.g.fillStyle(0xff4d5e, 1);
-    this.g.fillTriangle(12, 4, 12, 40, w - 4, 22);
-    this.save("flag", w, h);
-  }
 
   private generateBackpack(): void {
     this.clear();
