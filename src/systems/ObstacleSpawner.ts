@@ -7,7 +7,9 @@ import { pickWeighted, randomInt } from "../utils/mathUtils";
 import type { DifficultyManager } from "./DifficultyManager";
 import type { LaneIndex, ObstacleDefinition } from "../types/index";
 
-const SOLO_ONLY_KINDS = new Set(["dog", "protester", "car"]);
+// Kinds that pick their own lane internally (edge-emergers, crossers, cars) —
+// exclude them from combo waves so two obstacles never fight for the same lane.
+const SOLO_ONLY_KINDS = new Set(["dog", "protester", "selfieGuy", "car"]);
 
 export class ObstacleSpawner extends Phaser.Events.EventEmitter {
   static readonly PLAYER_HIT = "player-hit";

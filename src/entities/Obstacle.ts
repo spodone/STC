@@ -77,11 +77,22 @@ export class Obstacle extends Phaser.GameObjects.Container {
       this.crossDuration = travelTime * randomRange(0.7, 0.9);
       this.xUnit = this.crossStartUnit;
     } else if (definition.motion === "swooping") {
-      const side = Math.random() < 0.5 ? -1 : 1;
-      const targetUnit = laneUnit(lane);
-      this.crossStartUnit = targetUnit + side * 1.3;
-      this.crossEndUnit = targetUnit;
-      this.crossDuration = 0.4;
+      if (definition.kind === "pigeon") {
+        // bird drops in toward the given lane from a random side
+        const side = Math.random() < 0.5 ? -1 : 1;
+        const targetUnit = laneUnit(lane);
+        this.crossStartUnit = targetUnit + side * 1.3;
+        this.crossEndUnit = targetUnit;
+        this.crossDuration = 0.4;
+      } else {
+        // person only appears at an edge — jumps out from the roadside into
+        // the nearest edge lane (never the middle lane)
+        const fromLeft = Math.random() < 0.5;
+        const edgeUnit = laneUnit(fromLeft ? 0 : 2);
+        this.crossStartUnit = edgeUnit + (fromLeft ? -1.3 : 1.3);
+        this.crossEndUnit = edgeUnit;
+        this.crossDuration = 0.45;
+      }
       this.xUnit = this.crossStartUnit;
     } else if (definition.motion === "inLane") {
       this.xUnit = laneUnit(lane);
@@ -175,9 +186,12 @@ export class Obstacle extends Phaser.GameObjects.Container {
         // flying (and forces the player to track it), with a matching wing bank
         base += Math.sin(this.age * 3.0) * 0.85 * t;
         this.sprite.angle = Math.cos(this.age * 3.0) * 12 * t;
+        this.sprite.y = Math.sin(this.age * 14) * 4;
+      } else {
+        // person jumping out from the roadside: a single hop as they land
+        this.sprite.y = t < 1 ? -Math.sin(t * Math.PI) * 18 : 0;
       }
       this.xUnit = base;
-      this.sprite.y = Math.sin(this.age * 14) * 4;
     } else if (this.definition.motion === "inLane") {
       this.laneSwerveTimer -= deltaSeconds;
       if (this.laneSwerveTimer <= 0) {
